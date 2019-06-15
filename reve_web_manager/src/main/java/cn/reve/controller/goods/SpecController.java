@@ -16,6 +16,11 @@ public class SpecController {
     @Reference
     private SpecService specService;
 
+    @GetMapping("/findByTemplateId")
+    public PageResult<Spec> findByTemplateId(int size, int page, int id){
+        return specService.findSpecsByTemplateId(size, page, id);
+    }
+
     @GetMapping("/findAll")
     public List<Spec> findAll(){
         return specService.findAll();

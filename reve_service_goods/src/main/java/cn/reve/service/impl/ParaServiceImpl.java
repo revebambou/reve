@@ -1,4 +1,7 @@
 package cn.reve.service.impl;
+import cn.reve.dao.TemplateMapper;
+import cn.reve.pojo.goods.Template;
+import cn.reve.utils.MapperUtils;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -7,16 +10,21 @@ import cn.reve.entity.PageResult;
 import cn.reve.pojo.goods.Para;
 import cn.reve.service.goods.ParaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service(interfaceClass = ParaService.class)
+@Transactional
 public class ParaServiceImpl implements ParaService {
 
     @Autowired
     private ParaMapper paraMapper;
+
+    @Autowired
+    private TemplateMapper templateMapper;
 
     /**
      * 返回全部记录
@@ -77,6 +85,7 @@ public class ParaServiceImpl implements ParaService {
      */
     public void add(Para para) {
         paraMapper.insert(para);
+        updateParaNum(para, 1);
     }
 
     /**
@@ -92,7 +101,20 @@ public class ParaServiceImpl implements ParaService {
      * @param id
      */
     public void delete(Integer id) {
+        Para para = paraMapper.selectByPrimaryKey(id);
+        updateParaNum(para, -1);
         paraMapper.deleteByPrimaryKey(id);
+    }
+
+    @Override
+    public PageResult<Para> findParaByTemplateId(int pageNum, int size, int templateId) {
+        PageHelper.startPage(pageNum, size);
+        Example example = MapperUtils.andEqualToWithSingleValue(Para.class, "templateId", templateId);
+        Page<Para> paraPage = (Page<Para>) paraMapper.selectByExample(example);
+        PageResult<Para> paraPageResult = new PageResult<>();
+        paraPageResult.setRows(paraPage.getResult());
+        paraPageResult.setTotal(paraPage.getTotal());
+        return paraPageResult;
     }
 
     /**
@@ -128,6 +150,14 @@ public class ParaServiceImpl implements ParaService {
 
         }
         return example;
+    }
+
+    private void updateParaNum(Para para, int paramValue){
+        int templateId = para.getTemplateId();
+        Template template = templateMapper.selectByPrimaryKey(templateId);
+        int paraNum = template.getParaNum()+paramValue;
+        template.setParaNum(paraNum);
+        templateMapper.updateByPrimaryKeySelective(template);
     }
 
 }

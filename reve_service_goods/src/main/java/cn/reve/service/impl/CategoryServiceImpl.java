@@ -1,4 +1,6 @@
 package cn.reve.service.impl;
+import cn.reve.utils.MapperUtils;
+import cn.reve.utils.PageUtils;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -93,6 +95,18 @@ public class CategoryServiceImpl implements CategoryService {
      */
     public void delete(Integer id) {
         categoryMapper.deleteByPrimaryKey(id);
+    }
+
+    @Override
+    public PageResult<Category> viewNextClassByParentId(int size, int pageNum, int parentId) {
+        PageHelper.startPage(pageNum, size);
+        Example example = MapperUtils.andEqualToWithSingleValue(Category.class, "parentId", parentId);
+        Page<Category> categoryPage = (Page<Category>) categoryMapper.selectByExample(example);
+        /*PageResult<Category> pageResult = new PageResult<>();
+        pageResult.setTotal(categoryPage.getTotal());
+        pageResult.setRows(categoryPage.getResult());
+        return pageResult;*/
+        return PageUtils.setPageResult(categoryPage);
     }
 
     /**

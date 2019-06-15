@@ -1,4 +1,7 @@
 package cn.reve.service.impl;
+import cn.reve.dao.TemplateMapper;
+import cn.reve.pojo.goods.Template;
+import cn.reve.utils.MapperUtils;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -7,16 +10,21 @@ import cn.reve.entity.PageResult;
 import cn.reve.pojo.goods.Spec;
 import cn.reve.service.goods.SpecService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service(interfaceClass = SpecService.class)
+@Transactional
 public class SpecServiceImpl implements SpecService {
 
     @Autowired
     private SpecMapper specMapper;
+
+    @Autowired
+    private TemplateMapper templateMapper;
 
     /**
      * 返回全部记录
@@ -77,6 +85,7 @@ public class SpecServiceImpl implements SpecService {
      */
     public void add(Spec spec) {
         specMapper.insert(spec);
+        updateSpecNum(spec, 1);
     }
 
     /**
@@ -92,7 +101,23 @@ public class SpecServiceImpl implements SpecService {
      * @param id
      */
     public void delete(Integer id) {
+        Spec spec = specMapper.selectByPrimaryKey(id);
+        updateSpecNum(spec, -1);
+
         specMapper.deleteByPrimaryKey(id);
+
+    }
+
+    @Override
+    public PageResult<Spec> findSpecsByTemplateId(int size, int currentPage, int id) {
+        PageHelper.startPage(currentPage, size);
+        Example example = MapperUtils.andEqualToWithSingleValue(Spec.class, "templateId", id);
+        Page<Spec> specPage = (Page<Spec>)specMapper.selectByExample(example);
+        PageResult<Spec> specPageResult = new PageResult<>();
+        specPageResult.setRows(specPage.getResult());
+        specPageResult.setTotal(specPage.getTotal());
+        return specPageResult;
+
     }
 
     /**
@@ -112,22 +137,21 @@ public class SpecServiceImpl implements SpecService {
             if(searchMap.get("options")!=null && !"".equals(searchMap.get("options"))){
                 criteria.andLike("options","%"+searchMap.get("options")+"%");
             }
-
-            // ID
-            if(searchMap.get("id")!=null ){
-                criteria.andEqualTo("id",searchMap.get("id"));
-            }
-            // 排序
-            if(searchMap.get("seq")!=null ){
-                criteria.andEqualTo("seq",searchMap.get("seq"));
-            }
-            // 模板ID
-            if(searchMap.get("templateId")!=null ){
-                criteria.andEqualTo("templateId",searchMap.get("templateId"));
-            }
-
         }
         return example;
+    }
+
+    /**
+     *update the specNum in the tb_template table depends on paraValue
+     * @param spec
+     * @param paraValue
+     */
+    private void updateSpecNum(Spec spec, int paraValue){
+        int templateId = spec.getTemplateId();
+        Template template = templateMapper.selectByPrimaryKey(templateId);
+        int specNum = template.getSpecNum()+paraValue;
+        template.setSpecNum(specNum);
+        templateMapper.updateByPrimaryKeySelective(template);
     }
 
 }

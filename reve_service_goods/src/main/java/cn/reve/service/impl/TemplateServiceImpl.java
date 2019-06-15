@@ -1,4 +1,6 @@
 package cn.reve.service.impl;
+import cn.reve.dao.ParaMapper;
+import cn.reve.dao.SpecMapper;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -7,6 +9,7 @@ import cn.reve.entity.PageResult;
 import cn.reve.pojo.goods.Template;
 import cn.reve.service.goods.TemplateService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.List;
@@ -76,6 +79,8 @@ public class TemplateServiceImpl implements TemplateService {
      * @param template
      */
     public void add(Template template) {
+        template.setParaNum(0);
+        template.setSpecNum(0);
         templateMapper.insert(template);
     }
 

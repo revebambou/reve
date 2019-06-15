@@ -16,10 +16,10 @@
             <artifactId>reve_pojo</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>com.github.pagehelper</groupId>
             <artifactId>pagehelper</artifactId>
-        </dependency>
+        </dependency>-->
     </dependencies>
 
 </project>

@@ -32,4 +32,5 @@ public interface SpecService {
 
     public void delete(Integer id);
 
+    PageResult<Spec> findSpecsByTemplateId(int size, int currentPage, int id);
 }

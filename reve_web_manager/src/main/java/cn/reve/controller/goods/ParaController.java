@@ -16,6 +16,11 @@ public class ParaController {
     @Reference
     private ParaService paraService;
 
+    @GetMapping("/findParaByTemplateId")
+    public PageResult<Para> findParaByTemplateId(int pageNum, int size, int templateId){
+        return paraService.findParaByTemplateId(pageNum, size, templateId);
+    }
+
     @GetMapping("/findAll")
     public List<Para> findAll(){
         return paraService.findAll();

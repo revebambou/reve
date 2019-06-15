@@ -32,4 +32,5 @@ public interface CategoryService {
 
     public void delete(Integer id);
 
+    PageResult<Category> viewNextClassByParentId(int size, int pageNum, int parentId);
 }

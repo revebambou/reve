@@ -32,4 +32,5 @@ public interface ParaService {
 
     public void delete(Integer id);
 
+    PageResult<Para> findParaByTemplateId(int pageNum, int size, int templateId);
 }

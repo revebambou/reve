@@ -16,6 +16,12 @@ public class CategoryController {
     @Reference
     private CategoryService categoryService;
 
+    @PostMapping("/viewNextClassByParentId")
+    public PageResult<Category> viewNextClassByParentId(int size, int pageNum, int parentId){
+        System.out.println(size + " "+ pageNum + " " + parentId);
+        return categoryService.viewNextClassByParentId(size, pageNum, parentId);
+    }
+
     @GetMapping("/findAll")
     public List<Category> findAll(){
         return categoryService.findAll();
