@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Category Report</title>
+</head>
+<link rel="stylesheet" href="/css/elementui.css">
+<script src="/js/echarts.common.min.js"></script>
+<body>
+    <div id="app">
+        <el-bow>
+            <el-button type="primary" plain @click="test()">Export Data</el-button>
+            <el-button type="primary" plain @click="getFromLast7Days">Latest 7 Days</el-button>
+            <el-button type="primary" plain @click="getFromLast30Days">Latest 30 Days</el-button>
+            <el-button type="primary" plain @click="getFromLast90Days()">Latest 90 Days</el-button>
+        </el-bow>
+        <el-date-picker
+                v-model="date"
+                type="daterange"
+                align="right"
+                unlink-panels
+                range-separator="To"
+                start-placeholder="Start Date"
+                end-placeholder="End Date"
+                :picker-options="pickerOptions"
+                @change="getFromDatePicker()">
+        </el-date-picker>
+        <div id="main" style="width: 600px;height:400px;" v-show="flag"></div>
+        <el-table
+                :data="tableData"
+                border
+                style="width: 100%">
+            <el-table-column
+                    prop="categoryId1"
+                    label="Category Id"
+                    width="180">
+            </el-table-column>
+            <el-table-column
+                    prop="categoryName"
+                    label="分类名字(test)"
+                    width="180">
+            </el-table-column>
+            <el-table-column
+                    prop="countDate"
+                    label="The time counted"
+                    width="180">
+            </el-table-column>
+            <el-table-column
+                    prop="num"
+                    label="Sales Volume"
+                    width="150">
+            </el-table-column>
+            <el-table-column
+                    label="Sales Volume%"
+                    width="150">
+                <template slot-scope="scope">
+                    {{(scope.row.num/sumSaleVolume*100).toFixed(1)}}%
+                </template>
+            </el-table-column>
+            <el-table-column
+                    prop="money"
+                    label="Turnover"
+                    width="80">
+            </el-table-column>
+            <el-table-column
+                    label="Turnover%"
+                    width="150">
+                <template slot-scope="scope">
+                    {{(scope.row.money/sumTurnover*100).toFixed(1)}}%
+                </template>
+            </el-table-column>
+        </el-table>
+
+    </div>
+</body>
+<script src="/js/util.js"></script>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/elementui.js"></script>
+<script src="/js/dist/order/orderCategoryReport.js"></script>
+
+</html>
