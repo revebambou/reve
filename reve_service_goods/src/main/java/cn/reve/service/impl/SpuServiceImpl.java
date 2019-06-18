@@ -1,5 +1,10 @@
 package cn.reve.service.impl;
+import cn.reve.dao.SkuMapper;
+import cn.reve.pojo.goods.Goods;
+import cn.reve.pojo.goods.Sku;
+import cn.reve.utils.IdWorker;
 import com.alibaba.dubbo.config.annotation.Service;
+import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import cn.reve.dao.SpuMapper;
@@ -9,6 +14,7 @@ import cn.reve.service.goods.SpuService;
 import org.springframework.beans.factory.annotation.Autowired;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +23,9 @@ public class SpuServiceImpl implements SpuService {
 
     @Autowired
     private SpuMapper spuMapper;
+
+    @Autowired
+    private SkuMapper skuMapper;
 
     /**
      * 返回全部记录
@@ -93,6 +102,33 @@ public class SpuServiceImpl implements SpuService {
      */
     public void delete(String id) {
         spuMapper.deleteByPrimaryKey(id);
+    }
+
+    @Override
+    public void saveGoods(Goods goods) {
+        IdWorker idWorker = new IdWorker();
+        Spu spu = goods.getSpu();
+        spu.setId(""+new Date().getTime());
+        spuMapper.insertSelective(spu);
+
+        String spuName = spu.getName();
+        long categoryId = spu.getCategory3Id();
+        Date date = new Date();
+
+        List<Sku> skuList = goods.getSkuList();
+        for (Sku sku : skuList) {
+            Map<String, String> specMap = JSON.parseObject(sku.getSpec(), Map.class);
+            String skuName = null;
+            for(String value:specMap.values()){
+                skuName += " "+value;
+            }
+            sku.setId(""+new Date().getTime());
+            sku.setCategoryId((int) categoryId);
+            sku.setCreateTime(date);
+            sku.setUpdateTime(date);
+            sku.setName(skuName);
+            skuMapper.insertSelective(sku);
+        }
     }
 
     /**

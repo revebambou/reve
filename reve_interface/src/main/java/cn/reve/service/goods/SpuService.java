@@ -1,5 +1,6 @@
 package cn.reve.service.goods;
 import cn.reve.entity.PageResult;
+import cn.reve.pojo.goods.Goods;
 import cn.reve.pojo.goods.Spu;
 
 import java.util.*;
@@ -31,5 +32,7 @@ public interface SpuService {
 
 
     public void delete(String id);
+
+    void saveGoods(Goods goods);
 
 }

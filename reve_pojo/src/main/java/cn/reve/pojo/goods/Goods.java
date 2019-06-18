@@ -5,39 +5,39 @@ import java.util.List;
 
 public class Goods implements Serializable {
 
-    private Sku sku;
+    private Spu spu;
 
-    private List<Spu> spus;
+    private List<Sku> skuList;
 
-    public Goods(Sku sku, List<Spu> spus) {
-        this.sku = sku;
-        this.spus = spus;
+    public Goods(Spu spu, List<Sku> skuList) {
+        this.spu = spu;
+        this.skuList = skuList;
     }
 
     public Goods() {
     }
 
-    public Sku getSku() {
-        return sku;
+    public Spu getSpu() {
+        return spu;
     }
 
-    public void setSku(Sku sku) {
-        this.sku = sku;
+    public void setSpu(Spu spu) {
+        this.spu = spu;
     }
 
-    public List<Spu> getSpus() {
-        return spus;
+    public List<Sku> getSkuList() {
+        return skuList;
     }
 
-    public void setSpus(List<Spu> spus) {
-        this.spus = spus;
+    public void setSkuList(List<Sku> skuList) {
+        this.skuList = skuList;
     }
 
     @Override
     public String toString() {
         return "Goods{" +
-                "sku=" + sku +
-                ", spus=" + spus +
+                "spu=" + spu +
+                ", skuList=" + skuList +
                 '}';
     }
 }

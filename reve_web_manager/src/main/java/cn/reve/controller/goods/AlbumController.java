@@ -54,6 +54,15 @@ public class AlbumController {
         return new Result();
     }
 
+    @GetMapping("/updateCover")
+    public Result updateCover(String image, int albumId){
+        Album album = new Album();
+        album.setId((long) albumId);
+        album.setImage(image);
+        albumService.update(album);
+        return new Result();
+    }
+
     @GetMapping("/delete")
     public Result delete(Long id){
         albumService.delete(id);

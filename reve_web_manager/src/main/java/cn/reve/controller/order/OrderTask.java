@@ -41,7 +41,7 @@ public class OrderTask {
         System.out.println(result);
         return result;
     }
-    @Scheduled(cron = "* * * * * ?")
+    @Scheduled(cron = "0 0 1 * * ?")
     public void autoSpawnCountTrade(){
         String date = "2019-03-14";
         System.out.println(new Date());

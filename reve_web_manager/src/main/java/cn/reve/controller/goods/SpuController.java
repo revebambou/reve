@@ -1,5 +1,6 @@
 package cn.reve.controller.goods;
 
+import cn.reve.pojo.goods.Goods;
 import com.alibaba.dubbo.config.annotation.Reference;
 import cn.reve.entity.PageResult;
 import cn.reve.entity.Result;
@@ -15,6 +16,13 @@ public class SpuController {
 
     @Reference
     private SpuService spuService;
+
+    @PostMapping("/saveGoods")
+    public Result saveGoods(@RequestBody Goods goods){
+        System.out.println(goods);
+        spuService.saveGoods(goods);
+        return new Result();
+    }
 
     @GetMapping("/findAll")
     public List<Spu> findAll(){

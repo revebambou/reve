@@ -72,7 +72,8 @@
 </head>
 <body class="hold-transition">
 <div id="app">
-
+    <el-page-header @back="goBack" content="详情页面">
+    </el-page-header>
 
     <div class="content-header">
         <h1>管理<small>album管理</small></h1>
@@ -88,59 +89,67 @@
             <div class="filter-container">
                 <!--查询表单-->
                 <el-form :inline="true" >
-                          <el-form-item label="相册名称">
-<el-input v-model="searchMap.title" placeholder="相册名称" class="filter-item" ></el-input></el-form-item>
-
-                <el-button class="dalfBut" @click="fetchData()">查询</el-button>
                 <el-button type="primary"  class="butT" @click="formVisible=true;pojo={}">新增</el-button>
                 </el-form>
             </div>
 
 
             <el-table :data="tableData" border style="width: 30%">
-          <el-table-column label="Album Cover">
+<!--                <el-table-column label="Album" :visible.sync="showShashin">
+                    <template slot-scope="scope">
+                        <img :src="scope.row.image" >
+                    </template>
+                </el-table-column>-->
+          <el-table-column label="Album">
               <template slot-scope="scope">
-                  <a href="#" @click="viewAlbum(scope.row.id)" title="点击看相册"><img :src="scope.row.image" width="375" height="500"></a>
-                  <el-button @click="viewAlbum(scope.row.id)" type="primary" size="small">View The Album</el-button>
+                  <a href="#"@click="viewShashin(scope.row.image)" title="点击看大图"> <img :src="scope.row.image" width="375" height="500"></a>
+                  <el-button @click="viewShashin(scope.row.image)" size="mini" type="primary" size="small">View The Shashin</el-button>
+                  <el-button @click="setCover(scope.row.image)" type="primary" size="small">Set As the Cover</el-button>
+                  <el-button @click="delShaShin(scope.row.id)" size="mini" type="danger" size="small">删除</el-button>
               </template>
           </el-table-column>
             </el-table>
             <div class="pagination-container">
                 <el-pagination
                         class="pagiantion"
-                        @size-change="fetchData"
-                        @current-change="fetchData"
-                        :current-page.sync="currentPage"
+                        @size-change="getAlbum"
+                        @current-change="getAlbum"
+                        :current-page.sync="pageNum"
                         :page-sizes="[10, 20, 30, 40]"
-                        :page-size="size"
+                        :page-size.sync="pageSize"
                         layout="total, sizes, prev, pager, next, jumper"
                         :total="total">
                 </el-pagination>
             </div>
             <div class="add-form">
+
+                <!--show shashin-->
+                <el-dialog  title="" :visible.sync="showShashin" >
+                    <el-form label-width="80px">
+                        <el-form-item ><img :src="imageUrl"></el-input></el-form-item>
+                        <el-form-item>
+                            <el-button @click="showShashin = false" >关闭</el-button>
+                        </el-form-item>
+                    </el-form>
+                </el-dialog>
                 <!--弹出窗口-->
                 <el-dialog  title="编辑" :visible.sync="formVisible" >
                     <el-form label-width="80px">
-                                <el-form-item label="相册名称"><el-input v-model="pojo.title"></el-input></el-form-item>
-        <el-form-item label="相册封面"><el-input v-model="pojo.image" v-show="flag"></el-input></el-form-item>
-        <el-form-item label="图片列表"><el-input v-model="pojo.imageItems"></el-input></el-form-item>
-
-                            <!-- 图片上传代码 如页面有图片上传功能放开注释 ****
+                         <!--图片上传代码 如页面有图片上传功能放开注释 ****-->
                             <el-form-item label="图片">
                                 <el-upload
                                         class="avatar-uploader"
-                                        action="/upload/native.do"
+                                        action="/albumImg/upload.do"
                                         :show-file-list="false"
                                         :on-success="handleAvatarSuccess"
                                         :before-upload="beforeAvatarUpload">
-                                    <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                                    <img v-if="imgUrl" :src="imgUrl" class="avatar">
                                     <i v-else class="el-icon-plus avatar-uploader-icon"></i>
                                 </el-upload>
                             </el-form-item>
-                            -->
 
                             <el-form-item>
-                                <el-button type="primary" @click="save()">保存</el-button>
+                                <el-button type="primary" @click="addShaShin()">保存</el-button>
                                 <el-button @click="formVisible = false" >关闭</el-button>
                             </el-form-item>
                     </el-form>
@@ -156,5 +165,5 @@
 <script src="/js/vue.js"></script>
 <script src="/js/axios.js"></script>
 <script src="/js/elementui.js"></script>
-<script src="/js/dist/goods/album.js"></script>
+<script src="/js/dist/goods/albumImg.js"></script>
 </html>
