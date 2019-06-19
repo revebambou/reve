@@ -1,5 +1,7 @@
 package cn.reve.service.impl;
+import cn.reve.dao.CategoryMapper;
 import cn.reve.dao.SkuMapper;
+import cn.reve.pojo.goods.Category;
 import cn.reve.pojo.goods.Goods;
 import cn.reve.pojo.goods.Sku;
 import cn.reve.utils.IdWorker;
@@ -12,13 +14,14 @@ import cn.reve.entity.PageResult;
 import cn.reve.pojo.goods.Spu;
 import cn.reve.service.goods.SpuService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service(timeout = 5000, interfaceClass = SpuService.class)
 public class SpuServiceImpl implements SpuService {
 
     @Autowired
@@ -26,6 +29,12 @@ public class SpuServiceImpl implements SpuService {
 
     @Autowired
     private SkuMapper skuMapper;
+
+    @Autowired
+    private IdWorker idWorker;
+
+    @Autowired
+    private CategoryMapper categoryMapper;
 
     /**
      * 返回全部记录
@@ -105,14 +114,19 @@ public class SpuServiceImpl implements SpuService {
     }
 
     @Override
+    @Transactional
     public void saveGoods(Goods goods) {
-        IdWorker idWorker = new IdWorker();
+//        IdWorker idWorker = new IdWorker();
         Spu spu = goods.getSpu();
-        spu.setId(""+new Date().getTime());
+        String spuId = idWorker.nextId()+"";
+        spu.setId(spuId);
+        System.out.println(spu.getId() + " ccc");
         spuMapper.insertSelective(spu);
 
         String spuName = spu.getName();
         long categoryId = spu.getCategory3Id();
+        Category category = categoryMapper.selectByPrimaryKey(categoryId);
+        String categoryName = category.getName();
         Date date = new Date();
 
         List<Sku> skuList = goods.getSkuList();
@@ -122,8 +136,10 @@ public class SpuServiceImpl implements SpuService {
             for(String value:specMap.values()){
                 skuName += " "+value;
             }
-            sku.setId(""+new Date().getTime());
+            sku.setId(idWorker.nextId()+"");
+            sku.setSpuId(spuId);
             sku.setCategoryId((int) categoryId);
+            sku.setCategoryName(categoryName);
             sku.setCreateTime(date);
             sku.setUpdateTime(date);
             sku.setName(skuName);

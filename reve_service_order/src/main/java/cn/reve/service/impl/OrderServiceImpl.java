@@ -1,4 +1,9 @@
 package cn.reve.service.impl;
+import cn.reve.dao.OrderItemMapper;
+import cn.reve.pojo.order.OrderDetails;
+import cn.reve.pojo.order.OrderItem;
+import cn.reve.utils.IdWorker;
+import cn.reve.utils.MapperUtils;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -7,12 +12,14 @@ import cn.reve.entity.PageResult;
 import cn.reve.pojo.order.Order;
 import cn.reve.service.order.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service(interfaceClass = OrderService.class)
 public class OrderServiceImpl implements OrderService {
 
     @Autowired
@@ -47,6 +54,59 @@ public class OrderServiceImpl implements OrderService {
         Example example = createExample(searchMap);
         return orderMapper.selectByExample(example);
     }
+
+
+    @Autowired
+    private OrderItemMapper orderItemMapper;
+
+    @Autowired
+    private IdWorker idWorker;
+
+    @Override
+    @Transactional
+    public void saveOrderDetails(OrderDetails orderDetails) {
+        String orderId = idWorker.nextId()+"";
+        System.out.println("order id: " + orderId);
+        int totalMoney = 0;
+        int totalNum = 0;
+
+        List<OrderItem> orderItemList = orderDetails.getOrderItemList();
+        //Save OrderItems
+        for (OrderItem orderItem : orderItemList) {
+            String orderItemId = idWorker.nextId()+"";
+            orderItem.setId(orderItemId);
+            orderItem.setOrderId(orderId);
+            totalMoney += orderItem.getPayMoney();
+            totalNum += orderItem.getNum();
+            orderItemMapper.insertSelective(orderItem);
+        }
+        //Save order
+        Order order = orderDetails.getOrder();
+        Date date = new Date();
+        int payMoney = totalMoney + order.getPostFee() - order.getPreMoney();
+        order.setCreateTime(date);
+        order.setUpdateTime(date);
+        order.setId(orderId);
+        order.setTotalNum(totalNum);
+        order.setTotalMoney(totalMoney);
+        order.setPayMoney(payMoney);
+        orderMapper.insertSelective(order);
+    }
+
+    @Override
+    public OrderDetails queryOrderDetailById(String orderId) {
+        OrderDetails orderDetails = new OrderDetails();
+        //query order
+        Order order = orderMapper.selectByPrimaryKey(orderId);
+        //query order item lists
+        Example example = MapperUtils.andEqualToWithSingleValue(OrderItem.class, "orderId", orderId);
+        List<OrderItem> orderItemList = orderItemMapper.selectByExample(example);
+        // set order details
+        orderDetails.setOrder(order);
+        orderDetails.setOrderItemList(orderItemList);
+        return orderDetails;
+    }
+
 
     /**
      * 分页+条件查询

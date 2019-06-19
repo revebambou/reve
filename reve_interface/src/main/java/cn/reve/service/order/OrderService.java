@@ -1,6 +1,7 @@
 package cn.reve.service.order;
 import cn.reve.entity.PageResult;
 import cn.reve.pojo.order.Order;
+import cn.reve.pojo.order.OrderDetails;
 
 import java.util.*;
 
@@ -31,5 +32,9 @@ public interface OrderService {
 
 
     public void delete(String id);
+
+    void saveOrderDetails(OrderDetails orderDetails);
+
+    OrderDetails queryOrderDetailById(String orderId);
 
 }

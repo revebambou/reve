@@ -1,5 +1,6 @@
 package cn.reve.controller.order;
 
+import cn.reve.pojo.order.OrderDetails;
 import com.alibaba.dubbo.config.annotation.Reference;
 import cn.reve.entity.PageResult;
 import cn.reve.entity.Result;
@@ -15,6 +16,20 @@ public class OrderController {
 
     @Reference
     private OrderService orderService;
+
+    @GetMapping("queryOrderDetailById")
+    public OrderDetails queryOrderDetailById(String orderId){
+        OrderDetails orderDetails = orderService.queryOrderDetailById(orderId);
+        System.out.println(orderDetails);
+        return orderDetails;
+    }
+
+    @PostMapping("/saveOrderDetails")
+    public Result saveOrderDetails(@RequestBody OrderDetails orderDetails){
+        System.out.println(orderDetails);
+        orderService.saveOrderDetails(orderDetails);
+        return new Result();
+    }
 
     @GetMapping("/findAll")
     public List<Order> findAll(){
