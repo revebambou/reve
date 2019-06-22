@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Member</title>
+    <link rel="stylesheet" href="/css/elementui.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div id="app">
+        <el-form ref="form" :model="admin" label-width="150px">
+            <el-form-item label="Member Nickname">
+                <el-input v-model="admin.loginName"></el-input>
+            </el-form-item>
+            <el-form-item label="Member Name">
+                <el-input v-model="admin.name"></el-input>
+            </el-form-item>
+            <el-form-item label="Member Name">
+                <el-select v-model="admin.roleList" placeholder="Please select one or more roles" :multiple="true">
+                    <el-option label="超级管理员" value="1"></el-option>
+                    <el-option label="客服" value="2"></el-option>
+                    <el-option label="商品管理员" value="3"></el-option>
+                    <el-option label="Super Admin" value="4"></el-option>
+                    <el-option label="Admin" value="5"></el-option>
+                </el-select>
+            </el-form-item>
+
+            <el-form-item label="password">
+                <el-input placeholder="请输入密码" v-model="admin.password" show-password></el-input>
+            </el-form-item>
+            <el-form-item label="Note">
+                <el-input
+                        type="textarea"
+                        placeholder="max length: 40 characters"
+                        v-model="admin.textarea"
+                        maxlength="40"
+                        show-word-limit="true"
+                >
+                </el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="addMember">提交</el-button>
+            </el-form-item>
+        </el-form>
+    </div>
+</body>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/elementui.js"></script>
+<script>
+    new Vue({
+        el:"#app",
+        data() {
+            return {
+                admin:{
+                    loginName:"debug name",
+                    name:"revebambou",
+                    email:"123@qq.com",
+                    roleList:[],
+                    password:"123",
+                    activity:"123",
+                    textarea:"123",
+
+                },
+            }
+        },
+        created(){
+
+        },
+
+        methods: {
+            onSubmit() {
+                console.log('submit!');
+            },
+
+            addMember(){
+                axios.post(`/admin/addAdminRole.do`, this.admin).then(response=>{
+                    alert(response);
+                })
+            }
+        }
+    })
+</script>
+</html>

@@ -1,4 +1,6 @@
 package cn.reve.service.impl;
+import cn.reve.dao.RoleMapper;
+import cn.reve.pojo.system.Role;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -17,6 +19,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Autowired
     private AdminMapper adminMapper;
+
 
     /**
      * 返回全部记录
@@ -93,6 +96,30 @@ public class AdminServiceImpl implements AdminService {
      */
     public void delete(Integer id) {
         adminMapper.deleteByPrimaryKey(id);
+    }
+
+    @Override
+    public void saveAdminRoleByMap(Map<String, Object> adminRole) {
+        saveAdmin(adminRole);
+        saveAdminRole(adminRole);
+    }
+
+    private void saveAdmin(Map<String, Object> adminRole){
+        Admin admin = new Admin();
+        admin.setLoginName((String) adminRole.get("loginName"));
+        admin.setPassword((String) adminRole.get("password"));
+        admin.setStatus("1");
+        adminMapper.insertSelective(admin);
+    }
+
+    private void saveAdminRole(Map<String, Object> adminRole){
+        List<String> roleList = (List<String>) adminRole.get("roleList");
+        if(roleList!=null && roleList.size()!=0){
+            for (String str : roleList) {
+                Role role = new Role();
+                role.setName(str);
+            }
+        }
     }
 
     /**

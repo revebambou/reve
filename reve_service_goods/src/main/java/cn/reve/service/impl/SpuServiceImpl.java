@@ -1,17 +1,13 @@
 package cn.reve.service.impl;
-import cn.reve.dao.CategoryMapper;
-import cn.reve.dao.SkuMapper;
-import cn.reve.pojo.goods.Category;
-import cn.reve.pojo.goods.Goods;
-import cn.reve.pojo.goods.Sku;
+import cn.reve.dao.*;
+import cn.reve.pojo.goods.*;
 import cn.reve.utils.IdWorker;
+import cn.reve.utils.MapperUtils;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
-import cn.reve.dao.SpuMapper;
 import cn.reve.entity.PageResult;
-import cn.reve.pojo.goods.Spu;
 import cn.reve.service.goods.SpuService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +31,15 @@ public class SpuServiceImpl implements SpuService {
 
     @Autowired
     private CategoryMapper categoryMapper;
+
+    @Autowired
+    private CategoryBrandMapper categoryBrandMapper;
+
+    @Autowired
+    private ExamineLogMapper examineLogMapper;
+
+    @Autowired
+    private ExamineLogRecordMapper examineLogRecordMapper;
 
     /**
      * 返回全部记录
@@ -116,34 +121,134 @@ public class SpuServiceImpl implements SpuService {
     @Override
     @Transactional
     public void saveGoods(Goods goods) {
-//        IdWorker idWorker = new IdWorker();
-        Spu spu = goods.getSpu();
-        String spuId = idWorker.nextId()+"";
-        spu.setId(spuId);
-        System.out.println(spu.getId() + " ccc");
-        spuMapper.insertSelective(spu);
+        saveGoodsToDatabase(goods, false);
+    }
 
+    private void saveGoodsToDatabase(Goods goods, boolean update){
+
+        Spu spu = goods.getSpu();
+        Date date = new Date();
+        Date updateDate = date;
+        String spuId = spu.getId();
+        if(!update){
+            System.out.println("save");
+            spuId = idWorker.nextId()+"";
+            spu.setId(spuId);
+            System.out.println(spu.getId() + " spuId");
+            spuMapper.insertSelective(spu);
+        }else{
+            System.out.println("update");
+            spuMapper.updateByPrimaryKeySelective(spu);
+            updateDate = new Date();
+//            spuId = spu.getId();
+            Example example = MapperUtils.andEqualToWithSingleValue(Sku.class, "spuId", spuId);
+            List<Sku> skuList = skuMapper.selectByExample(example);
+            for (Sku sku : skuList) {
+                skuMapper.deleteByPrimaryKey(sku);
+            }
+        }
+        System.out.println("spuId:" + spuId);
+        System.out.println("save skuList");
         String spuName = spu.getName();
-        long categoryId = spu.getCategory3Id();
+        int categoryId = spu.getCategory3Id();
+        int brandId = spu.getBrandId();
         Category category = categoryMapper.selectByPrimaryKey(categoryId);
         String categoryName = category.getName();
-        Date date = new Date();
 
+        //save in tb_category_brand
+        CategoryBrand categoryBrand = new CategoryBrand();
+        categoryBrand.setBrandId(brandId);
+        categoryBrand.setCategoryId(categoryId);
+        int count = categoryBrandMapper.selectCount(categoryBrand);
+        if(count==0){
+            categoryBrandMapper.insertSelective(categoryBrand);
+        }
+
+        //save sku lists
         List<Sku> skuList = goods.getSkuList();
         for (Sku sku : skuList) {
-            Map<String, String> specMap = JSON.parseObject(sku.getSpec(), Map.class);
-            String skuName = null;
-            for(String value:specMap.values()){
-                skuName += " "+value;
+            String spec = sku.getSpec();
+            //if there is only one sku in a spu, that is, the sku.spec is null, assign with "{}"
+            String skuName = spuName;
+            if(spec==null || "".equals(spec)){
+                sku.setSpec("{}");
+            }else {
+                Map<String, String> specMap = JSON.parseObject(spec, Map.class);
+                for (String value : specMap.values()) {
+                    skuName += " " + value;
+                }
             }
             sku.setId(idWorker.nextId()+"");
             sku.setSpuId(spuId);
-            sku.setCategoryId((int) categoryId);
+            sku.setCategoryId(categoryId);
             sku.setCategoryName(categoryName);
             sku.setCreateTime(date);
-            sku.setUpdateTime(date);
+            sku.setUpdateTime(updateDate);
             sku.setName(skuName);
             skuMapper.insertSelective(sku);
+        }
+    }
+
+    @Override
+    public Goods findGoodsBySpuId(String spuId) {
+        Spu spu = spuMapper.selectByPrimaryKey(spuId);
+        List<Sku> skuList = (List<Sku>)skuMapper.selectByPrimaryKey(spuId);
+        Goods goods = new Goods();
+        goods.setSkuList(skuList);
+        goods.setSpu(spu);
+        return goods;
+    }
+
+    @Override
+    @Transactional
+    public void updateGoods(Goods goods) {
+        saveGoodsToDatabase(goods, true);
+    }
+
+    @Override
+    @Transactional
+    public void updateSpuViaExamine(String spuId, String radio, String memo) {
+        Spu spu = new Spu();
+        spu.setId(spuId);
+        spu.setIsMarketable(radio);
+        spu.setStatus("1");
+        spuMapper.updateByPrimaryKeySelective(spu);
+        //save the examine log
+
+        Date date = new Date();
+        ExamineLog examineLog = new ExamineLog();
+        examineLog.setUpdateTime(date);
+        int examineId = 0;
+
+        Example example = MapperUtils.andEqualToWithSingleValue(ExamineLog.class, "spuId", spuId);
+        List<ExamineLog> examineLogList = examineLogMapper.selectByExample(example);
+        if(examineLogList==null || examineLogList.size()==0){
+            examineLog.setCreateTime(date);
+            examineLog.setSpuId(spuId);
+            examineLogMapper.insertSelective(examineLog);
+            examineId = examineLog.getId();// In order to use this, must set the Options in mapper
+        }else{
+            examineLog.setUpdateTime(date);
+            examineId = examineLogList.get(0).getId();
+            examineLog.setId(examineId);
+            examineLogMapper.updateByPrimaryKeySelective(examineLog);
+        }
+        // save the examine log record
+
+        System.out.println("examineId: "+examineId);
+        ExamineLogRecord examineLogRecord = new ExamineLogRecord();
+        examineLogRecord.setExamineId(examineId);
+        examineLogRecord.setStatus("1");
+        examineLogRecord.setMemo(memo);
+        examineLogRecordMapper.insertSelective(examineLogRecord);
+
+    }
+
+    @Override
+    @Transactional
+    public void batchExamineByIds(String[] spuIds, String radio, String memo) {
+        for (String spuId : spuIds) {
+            updateSpuViaExamine(spuId, radio, memo);
         }
     }
 

@@ -1,5 +1,6 @@
 package cn.reve.controller.system;
 
+import cn.reve.utils.BCrypt;
 import com.alibaba.dubbo.config.annotation.Reference;
 import cn.reve.entity.PageResult;
 import cn.reve.entity.Result;
@@ -15,6 +16,16 @@ public class AdminController {
 
     @Reference
     private AdminService adminService;
+
+    @PostMapping("/addAdminRole")
+    public Result addAdminRole(@RequestBody Map<String, Object> admin){
+        String password = (String) admin.get("password");
+        String gensalt = BCrypt.gensalt();
+        password = BCrypt.hashpw(password, gensalt);
+        System.out.println("del after ok"+password);
+        admin.put("password", password);
+        return new Result();
+    }
 
     @GetMapping("/findAll")
     public List<Admin> findAll(){

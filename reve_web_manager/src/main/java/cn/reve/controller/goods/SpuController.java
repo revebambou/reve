@@ -24,6 +24,20 @@ public class SpuController {
         return new Result();
     }
 
+    @PostMapping("/updateGoods")
+    public Result updateGoods(@RequestBody Goods goods){
+        System.out.println(goods);
+        spuService.updateGoods(goods);
+        return new Result();
+    }
+
+    @GetMapping("/findGoodsBySpuId")
+    public Goods findGoodsBySpuId(String spuId){
+        Goods goods = spuService.findGoodsBySpuId(spuId);
+        System.out.println(goods);
+        return goods;
+    }
+
     @GetMapping("/findAll")
     public List<Spu> findAll(){
         return spuService.findAll();
@@ -65,6 +79,19 @@ public class SpuController {
     @GetMapping("/delete")
     public Result delete(String id){
         spuService.delete(id);
+        return new Result();
+    }
+
+    @GetMapping("/examine")
+    public Result examine(String spuId, String radio, String memo){
+        spuService.updateSpuViaExamine(spuId, radio, memo);
+        return new Result();
+    }
+
+    @PostMapping("/batchExamineByIds")
+    public Result batchExamineByIds(@RequestBody String[] spuIds, String radio, String memo){
+        System.out.println(spuIds.toString()+"==="+radio+"==="+memo);
+        spuService.batchExamineByIds(spuIds, radio, memo);
         return new Result();
     }
 

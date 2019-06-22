@@ -3,11 +3,18 @@
              xmlns:beans="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 						http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
+
+    <http pattern="/login.html" security="none"></http>
+    <http pattern="/js/**" security="none"></http>
+    <http pattern="/css/**" security="none"></http>
+    <http pattern="/img/**" security="none"></http>
+
     <!--page interceptor url-->
     <http>
-        <intercept-url pattern="/**" access="hasRole('ROLE_ADMIN')"/>
-        <form-login/>
+        <intercept-url pattern="/" access="hasRole('ROLE_ADMIN')"/>
+        <form-login login-page="/login.html" default-target-url="/main.html"/>
         <logout/>
+        <csrf disabled="true"></csrf>
     </http>
     <!--authentication manager-->
     <!--noop here means no operation-->

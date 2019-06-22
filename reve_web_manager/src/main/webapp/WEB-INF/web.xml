@@ -2,7 +2,7 @@
  "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
  "http://java.sun.com/dtd/web-app_2_3.dtd" >
 
-<web-app>
+<web-app><!--change web-app_2_5 build, how to? or define filter and then define filter-mapping in turn-->
   <display-name>Archetype Created Web Application</display-name>
   <!-- 解决post乱码 -->
   <filter>
@@ -17,16 +17,17 @@
       <param-value>true</param-value>
     </init-param>
   </filter>
+
+  <filter>
+    <filter-name>springSecurityFilterChain</filter-name><!--This name mustn't be changed-->
+    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+  </filter>
+
   <filter-mapping>
     <filter-name>CharacterEncodingFilter</filter-name>
     <url-pattern>/*</url-pattern>
   </filter-mapping>
 
-
-  <filter>
-    <filter-name>springSecurityFilterChain</filter-name>
-    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
-  </filter>
   <filter-mapping>
     <filter-name>springSecurityFilterChain</filter-name>
     <url-pattern>/*</url-pattern>

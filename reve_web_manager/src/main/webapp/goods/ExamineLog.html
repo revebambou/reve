@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>spu管理</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="/css/elementui.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+
+</head>
+<body class="hold-transition">
+<div id="app">
+
+    <div class="content-header">
+        <h1>管理<small>spu管理</small></h1>
+        <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>管理</el-breadcrumb-item>
+            <el-breadcrumb-item>spu管理</el-breadcrumb-item>
+        </el-breadcrumb>
+    </div>
+
+    <div class="app-container">
+        <div class="box">
+
+            <el-table
+                    ref="multipleTable"
+                    :data="tableData"
+                    tooltip-effect="dark"
+                    style="width: 100%"
+                    @selection-change="handleSelectionChange">
+                <el-table-column
+                        type="selection"
+                        width="55">
+                </el-table-column>
+                          <el-table-column prop="id" label="ID" width="80"></el-table-column>
+          <el-table-column prop="sn" label="货号" width="80"></el-table-column>
+          <el-table-column prop="name" label="商品名称" width="300"></el-table-column>
+          <el-table-column label="图片" width="80">
+              <template slot-scope="scope">
+                  <img :src="scope.row.image">
+              </template>
+          </el-table-column>
+          <el-table-column prop="saleNum" label="销量" sortable width="80"></el-table-column>
+          <el-table-column prop="isMarketable" label="是否上架" sortable width="110"></el-table-column>
+          <el-table-column prop="isDelete" label="是否删除" sortable width="110"></el-table-column>
+          <el-table-column prop="status" label="审核状态" sortable width="110"></el-table-column>
+
+                    <el-table-column
+                            label="操作"  >
+                        <template slot-scope="scope" width="80">
+                            <el-button @click="viewExamine()" size="mini" type="primary" size="small">View</el-button>
+                            <el-button @click="formVisible=true ; spuId = scope.row.id; spuName = scope.row.name" size="mini" type="danger" size="small">审核</el-button>
+                        </template>
+                    </el-table-column>
+            </el-table>
+            <div class="pagination-container">
+                <el-pagination
+                        class="pagiantion"
+                        @size-change="fetchData"
+                        @current-change="fetchData"
+                        :current-page.sync="currentPage"
+                        :page-sizes="[20, 40, 60, 80]"
+                        :page-size.sync="size"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="total">
+                </el-pagination>
+            </div>
+            <div class="add-form">
+                <!--弹出窗口-->
+                <el-dialog  title="Examine" :visible.sync="formVisible" >
+                    <el-form label-width="80px">
+        <el-form-item label="商品名称"><el-input v-model="spuName"></el-input></el-form-item>
+        <el-form-item label="商品审核">
+            <template>
+                <el-radio v-model="radio" label="1">Pass</el-radio>
+                <el-radio v-model="radio" label="0">Failed</el-radio>
+            </template>
+        </el-form-item>
+                        <el-form-item>
+                            </el-input>
+                            <div style="margin: 20px 0;"></div>
+                            <el-input
+                                    type="textarea"
+                                    placeholder="请输入内容"
+                                    v-model="memo"
+                                    maxlength="30"
+                                    show-word-limit
+                            >
+                            </el-input>
+                        </el-form-item>
+
+                            <el-form-item>
+                                <el-button type="primary" @click="examine()">确认</el-button>
+                                <el-button @click="formVisible = false" >取消</el-button>
+                            </el-form-item>
+                    </el-form>
+                </el-dialog>
+
+                <!--弹出窗口-->
+                <el-dialog  title="Batch Examine" :visible.sync="batchForm" >
+                    <el-form label-width="80px">
+                        <el-form-item label="商品审核">
+                            <template>
+                                <el-radio v-model="radio" label="1">Pass</el-radio>
+                                <el-radio v-model="radio" label="0">Failed</el-radio>
+                            </template>
+                        </el-form-item>
+                        <el-form-item>
+                            </el-input>
+                            <div style="margin: 20px 0;"></div>
+                            <el-input
+                                    type="textarea"
+                                    placeholder="请输入内容"
+                                    v-model="memo"
+                                    maxlength="30"
+                                    show-word-limit
+                            >
+                            </el-input>
+                        </el-form-item>
+
+                        <el-form-item>
+                            <el-button type="primary" @click="batchExamine()">确认</el-button>
+                            <el-button @click="formVisible = false" >取消</el-button>
+                        </el-form-item>
+                    </el-form>
+                </el-dialog>
+
+            </div>
+
+        </div>
+    </div>
+
+
+</div>
+</body>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/elementui.js"></script>
+<script>
+     new Vue({
+        el: '#app',
+        data(){
+            return {
+                tableData: [],
+                currentPage: 1,
+                total: 10,
+                size: 20,
+                searchMap: {},
+                pojo: {},
+                formVisible: false,
+                batchForm:false,
+                imageUrl: '',
+                spuId:0,
+                spuName:"",
+                radio:0,
+                value:"1",
+                memo:"text context, del this",
+                spuIds:[],
+            }
+        },
+        created(){
+            this.fetchData();
+        },
+        methods:{
+            fetchData (){
+                axios.post(`/spu/findPage.do?page=${this.currentPage}&size=${this.size}`,this.searchMap).then(response => {
+                    this.tableData = response.data.rows;
+                    this.total = response.data.total;
+                });
+            },
+            save (){
+                // this.pojo.image= this.imageUrl; //如页面有图片上传功能放开注释
+                axios.post(`/spu/${this.pojo.id==null?'add':'update'}.do`,this.pojo).then(response => {
+                    this.fetchData (); //刷新列表
+                    this.formVisible = false ;//关闭窗口
+                });
+            },
+            edit (id){
+                this.formVisible = true // 打开窗口
+                // 调用查询
+                axios.get(`/spu/findById.do?id=${id}`).then(response => {
+                    this.pojo = response.data;
+                    // this.imageUrl=this.pojo.image //显示图片  如页面有图片上传功能放开注释
+                })
+            },
+            dele (id){
+                this.$confirm('确定要删除此记录吗?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then( () => {
+                    axios.get(`/spu/delete.do?id=${id}`).then(response => {
+                        this.fetchData (); //刷新列表
+                    })
+                })
+            },
+            examine(){
+                this.formVisible = false;
+                axios.get(`/spu/examine.do?spuId=${this.spuId}&radio=${this.radio}&memo=${this.memo}`).then(response=>{
+                    alert(response.data.message);
+                    this.fetchData();
+                })
+            },
+            batchExamine(){
+                this.batchForm = false;
+                if(this.spuIds==null || this.spuIds == ""){
+                    alert("please select one or more goods and then try again later.")
+                }else {
+                    axios.post(`/spu/batchExamineByIds.do?radio=${this.radio}&memo=${this.memo}`, this.spuIds).then(response => {
+                        alert("Bacth Examine had been " + response.data.message);
+                        this.fetchData();
+                    })
+                }
+            },
+            handleSelectionChange(val) {
+                this.spuIds = [];
+                console.log(val)
+                for(let i=0; i<val.length; i++){
+                    this.spuIds.push(val[i].id);
+                }
+                console.log(this.spuIds)
+            }
+        }
+    })
+</script>
+</html>

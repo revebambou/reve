@@ -16,6 +16,11 @@ public class MenuController {
     @Reference
     private MenuService menuService;
 
+    @GetMapping("/queryAllMenu")
+    public List<Map> queryAllMenu(){
+        return menuService.queryAllMenu();
+    }
+
     @GetMapping("/findAll")
     public List<Menu> findAll(){
         return menuService.findAll();

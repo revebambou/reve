@@ -35,4 +35,11 @@ public interface SpuService {
 
     void saveGoods(Goods goods);
 
+    Goods findGoodsBySpuId(String spuId);
+
+    void updateGoods(Goods goods);
+
+    void updateSpuViaExamine(String spuId, String radio, String memo);
+
+    void batchExamineByIds(String[] spuIds, String radio, String memo);
 }
