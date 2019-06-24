@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>order管理</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="/css/elementui.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+
+</head>
+<body class="hold-transition">
+<div id="app">
+
+    <div class="content-header">
+        <h1>管理<small>order管理</small></h1>
+        <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>管理</el-breadcrumb-item>
+            <el-breadcrumb-item>order管理</el-breadcrumb-item>
+        </el-breadcrumb>
+    </div>
+
+    <div class="app-container">
+        <div class="box">
+
+            <el-table
+                    ref="multipleTable"
+                    :data="orderData"
+                    tooltip-effect="dark"
+                    style="width: 100%"
+                    @selection-change="handleSelectionChange">
+                <el-table-column
+                        type="selection"
+                        width="55">
+                </el-table-column>
+                <el-table-column
+                        type="index"
+                        :index="indexMethod">
+                </el-table-column>
+                          <el-table-column prop="id" label="订单编号" width="200"></el-table-column>
+          <el-table-column prop="receiverContact" label="收货人" width="200"></el-table-column>
+          <el-table-column prop="receiverMobile" label="收货人手机号码" width="200"></el-table-column>
+                <el-table-column prop="username" label="邮政编码" width="200"></el-table-column>
+                <el-table-column prop="receiverAddress" label="收货地址" width="100"></el-table-column>
+                <el-table-column label="配送方式" width="150">
+                    <el-select v-model="shippingName" placeholder="请选择活动区域">
+                        <el-option label="区域一" value="shanghai"></el-option>
+                        <el-option label="区域二" value="beijing"></el-option>
+                    </el-select>
+                </el-table-column>
+                <el-table-column prop="orderStatus" label="物流单号" width="150"></el-table-column>
+            </el-table>
+            <div class="pagination-container">
+                <el-pagination
+                        class="pagiantion"
+                        @size-change="fetchData"
+                        @current-change="fetchData"
+                        :current-page.sync="currentPage"
+                        :page-sizes="[20, 40, 60, 80]"
+                        :page-size.sync="size"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="orderTotal">
+                </el-pagination>
+            </div>
+
+        </div>
+    </div>
+
+
+</div>
+</body>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/elementui.js"></script>
+<script>
+     new Vue({
+        el: '#app',
+        data(){
+            return {
+                orderData: [],
+                orderIds:[],
+                orderStatus:[],
+                currentPage: 1,
+                orderTotal: 10,
+                size: 20,
+                searchMap: {},
+                pojo: {},
+                formVisible: false,
+                imageUrl: '',
+                shippingName:"",
+            }
+        },
+        created(){
+            this.fetchData();
+        },
+        methods:{
+            fetchData (){
+                axios.post(`/order/findPage.do?page=${this.currentPage}&size=${this.size}`,this.searchMap).then(response => {
+                    this.orderData = response.data.rows;
+                    this.orderTotal = response.data.total;
+                });
+            },
+            save (){
+                // this.pojo.image= this.imageUrl; //如页面有图片上传功能放开注释
+                axios.post(`/order/${this.pojo.id==null?'add':'update'}.do`,this.pojo).then(response => {
+                    this.fetchData (); //刷新列表
+                    this.formVisible = false ;//关闭窗口
+                });
+            },
+            edit (id){
+                this.formVisible = true // 打开窗口
+                // 调用查询
+                axios.get(`/order/findById.do?id=${id}`).then(response => {
+                    this.pojo = response.data;
+                    // this.imageUrl=this.pojo.image //显示图片  如页面有图片上传功能放开注释
+                })
+            },
+            dele (id){
+                this.$confirm('确定要删除此记录吗?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then( () => {
+                    axios.get(`/order/delete.do?id=${id}`).then(response => {
+                        this.fetchData (); //刷新列表
+                    })
+                })
+            },
+            handleSelectionChange(val){
+                console.log(val);
+                this.orderIds = [];
+                this.orderStatus = [];
+                for(let i=0; i<val.length; i++){
+                    this.orderIds.push(val[i].id);
+                    this.orderStatus.push(val[i].orderStatus)
+                }
+            },
+            process(){
+                alert("wait later")
+            },
+            batchDeliver(){
+                let incorrectOrder = [];
+                for(let i=0; i<this.orderStatus.length; i++){
+                    let temp = this.orderStatus[i];
+                    if(temp >= 2 && temp <= 4){
+                        incorrectOrder.push(i);
+                    }
+                }
+
+                if(incorrectOrder!="" && incorrectOrder!=null){
+                    alert("The status of orders in " +incorrectOrder+" are incorrect. Please check again and then try again later.")
+                }else {
+                    if (this.orderIds == "" || this.orderIds == null) {
+                        alert("Please select one or more orders to deliver")
+                    } else {
+                        axios.post(`/order/batchDeliver.do`, this.orderIds).then(response => {
+                            alert(response.data.message);
+                            this.fetchData();
+                        })
+                    }
+                }
+            },
+            deliver(id, orderStatus){
+                if(orderStatus>=2 && orderStatus<=4){
+                    alert("The order status selected is invalid, please check again and then try again later.")
+                }else{
+                    axios.get(`/order/deliver.do?orderId=${id}`).then(response=>{
+                        alert(response.data.message);
+                        this.fetchData();
+                    })
+                }
+            },
+            indexMethod(index){
+                return index;
+            }
+        }
+    })
+</script>
+</html>

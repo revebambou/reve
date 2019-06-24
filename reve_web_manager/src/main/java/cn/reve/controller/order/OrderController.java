@@ -17,6 +17,19 @@ public class OrderController {
     @Reference
     private OrderService orderService;
 
+    @PostMapping("/batchDeliver")
+    public Result batchDeliver(@RequestBody String[] orderIds){
+        orderService.batchDeliverByIds(orderIds);
+        return new Result();
+    }
+
+    @GetMapping("/deliver")
+    public Result deliverSingleOrder(String orderId){
+        System.out.println(orderId);
+        orderService.deliverBySingleId(orderId);
+        return new Result();
+    }
+
     @GetMapping("queryOrderDetailById")
     public OrderDetails queryOrderDetailById(String orderId){
         OrderDetails orderDetails = orderService.queryOrderDetailById(orderId);

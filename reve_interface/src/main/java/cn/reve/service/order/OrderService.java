@@ -37,4 +37,8 @@ public interface OrderService {
 
     OrderDetails queryOrderDetailById(String orderId);
 
+    void deliverBySingleId(String orderId);
+
+    void batchDeliverByIds(String[] orderIds);
+
 }

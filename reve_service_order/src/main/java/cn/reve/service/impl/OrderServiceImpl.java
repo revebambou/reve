@@ -107,6 +107,26 @@ public class OrderServiceImpl implements OrderService {
         return orderDetails;
     }
 
+    @Override
+    public void deliverBySingleId(String orderId) {
+        Order order = new Order();
+        order.setId(orderId);
+        order.setOrderStatus("1");
+        orderMapper.updateByPrimaryKeySelective(order);
+    }
+
+    /**
+     * change the orderStatus to 1, that is, the order is waiting to deliver.
+     * @param orderIds
+     */
+    @Override
+    @Transactional
+    public void batchDeliverByIds(String[] orderIds){
+        for (String orderId : orderIds) {
+            deliverBySingleId(orderId);
+        }
+    }
+
 
     /**
      * 分页+条件查询

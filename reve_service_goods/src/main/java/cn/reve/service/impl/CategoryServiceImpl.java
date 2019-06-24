@@ -11,6 +11,8 @@ import cn.reve.service.goods.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -107,6 +109,31 @@ public class CategoryServiceImpl implements CategoryService {
         pageResult.setRows(categoryPage.getResult());
         return pageResult;*/
         return PageUtils.setPageResult(categoryPage);
+    }
+
+    @Override
+    public List<Map> findCategoriesWithShowingInForeground() {
+        Example example = MapperUtils.andEqualToWithSingleValue(Category.class, "isShow", "1");
+        List<Category> categoryList = categoryMapper.selectByExample(example);
+        System.out.println(categoryList);
+        List<Map> mapList = saveCategoryToList(categoryList, 0);
+        System.out.println(mapList);
+        return mapList;
+    }
+
+    private List<Map> saveCategoryToList(List<Category> categoryList, int parentId){
+        List<Map> mapList = new ArrayList<>();
+        if(categoryList!=null && categoryList.size()!=0){
+            for (Category category : categoryList) {
+                if(category.getParentId()==parentId){
+                    Map map = new HashMap();
+                    map.put("name", category.getName());
+                    map.put("menus",saveCategoryToList(categoryList, category.getId()));
+                    mapList.add(map);
+                }
+            }
+        }
+        return mapList;
     }
 
     /**

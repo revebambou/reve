@@ -87,6 +87,17 @@ public class Category implements Serializable{
 		this.templateId = templateId;
 	}
 
-
-	
+	@Override
+	public String toString() {
+		return "Category{" +
+				"id=" + id +
+				", name='" + name + '\'' +
+				", goodsNum=" + goodsNum +
+				", isShow='" + isShow + '\'' +
+				", isMenu='" + isMenu + '\'' +
+				", seq=" + seq +
+				", parentId=" + parentId +
+				", templateId=" + templateId +
+				'}';
+	}
 }

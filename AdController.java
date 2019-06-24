@@ -3,6 +3,7 @@ package cn.reve.controller.business;
 import cn.reve.pojo.business.Ad;
 import cn.reve.service.business.AdService;
 import com.alibaba.dubbo.config.annotation.Reference;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@RestController
+@Controller
 @RequestMapping("/ad")
 public class AdController {
 

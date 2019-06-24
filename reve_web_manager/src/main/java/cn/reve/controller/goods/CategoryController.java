@@ -16,6 +16,11 @@ public class CategoryController {
     @Reference
     private CategoryService categoryService;
 
+    @GetMapping("/findCategoriesInForeground")
+    public List<Map> findCategoriesWithShowingInForeground(){
+        return categoryService.findCategoriesWithShowingInForeground();
+    }
+
     @PostMapping("/viewNextClassByParentId")
     public PageResult<Category> viewNextClassByParentId(int size, int pageNum, int parentId){
         System.out.println(size + " "+ pageNum + " " + parentId);

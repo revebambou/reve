@@ -101,10 +101,11 @@ public class AdServiceImpl implements AdService {
         Example example = new Example(Ad.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("position", position);
-        criteria.andLessThanOrEqualTo("endTime", new Date());
-        criteria.andGreaterThanOrEqualTo("startTime", new Date());
+        criteria.andLessThanOrEqualTo("startTime", new Date());
+        criteria.andGreaterThanOrEqualTo("endTime", new Date());
         criteria.andEqualTo("status", "1");
-        return adMapper.selectByExample(example);
+        List<Ad> ads = adMapper.selectByExample(example);
+        return ads;
     }
 
     /**
