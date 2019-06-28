@@ -22,6 +22,7 @@
         <module>reve_common_service</module>
         <module>reve_common_web</module>
         <module>reve_web_potal</module>
+        <module>importData</module>
     </modules>
 
     <packaging>pom</packaging>

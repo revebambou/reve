@@ -45,10 +45,12 @@
                 <el-table-column prop="username" label="邮政编码" width="200"></el-table-column>
                 <el-table-column prop="receiverAddress" label="收货地址" width="100"></el-table-column>
                 <el-table-column label="配送方式" width="150">
-                    <el-select v-model="shippingName" placeholder="请选择活动区域">
-                        <el-option label="区域一" value="shanghai"></el-option>
-                        <el-option label="区域二" value="beijing"></el-option>
+                    <template slot-scope="scope">
+                    <el-select v-model="scope.row.shippingName" placeholder="Please select shipping name">
+                        <el-option label="yuantong" value="shanghai"></el-option>
+                        <el-option label="ems" value="beijing"></el-option>
                     </el-select>
+                    </template>
                 </el-table-column>
                 <el-table-column prop="orderStatus" label="物流单号" width="150"></el-table-column>
             </el-table>
@@ -93,6 +95,11 @@
             }
         },
         created(){
+            let search = window.location.search;
+            let index = search.lastIndexOf("=")+1;
+            let str = search.substring(index);
+            this.orderIds = str.split(",");
+            console.log(this.orderIds);
             this.fetchData();
         },
         methods:{

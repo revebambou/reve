@@ -46,6 +46,7 @@
                     <port>9102</port>
                     <!-- 请求路径 -->
                     <path>/</path>
+                    <uriEncoding>utf-8</uriEncoding>
                 </configuration>
             </plugin>
         </plugins>

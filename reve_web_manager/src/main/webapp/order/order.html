@@ -261,8 +261,10 @@
                         alert("Please select one or more orders to deliver")
                     } else {
                         axios.post(`/order/batchDeliver.do`, this.orderIds).then(response => {
-                            alert(response.data.message);
-                            location.href="batchDeliver.html";
+                            window.location.href="./batchDeliver.html?data=" + this.orderIds;
+                            /*let msg = response.data.message;
+                            console.log(msg);
+                            alert(msg);*/
                         })
                     }
                 }

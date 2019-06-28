@@ -1,7 +1,10 @@
 package cn.reve.controller.order;
 
 import cn.reve.entity.Result;
+import cn.reve.pojo.goods.Goods;
+import cn.reve.pojo.goods.Sku;
 import cn.reve.pojo.order.CategoryReport;
+import cn.reve.service.goods.SkuService;
 import cn.reve.service.order.CategoryReportService;
 import cn.reve.service.order.CountTradeService;
 import com.alibaba.dubbo.config.annotation.Reference;
@@ -23,6 +26,9 @@ public class OrderTask {
 
     @Reference
     private CountTradeService countTradeService;
+
+    @Reference
+    private SkuService skuService;
 
     @GetMapping("/countCategoryReport")
     private List<CategoryReport> countCategoryReport(){

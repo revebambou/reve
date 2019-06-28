@@ -32,4 +32,6 @@ public interface SkuService {
 
     public void delete(String id);
 
+    Map searchMap(Map<String,String> searchMap);
+
 }

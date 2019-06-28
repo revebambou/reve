@@ -1,4 +1,4 @@
-20190624£º
+20190628 Update
 day01: Create Environment: 90%
 day02: Front End: 100%, Upload function: 20%
 day03: Spawn project template 100%, Manage Category: 50%, Manage Album: 90%
@@ -10,3 +10,20 @@ day08: rbac: 20%
 day09: (new chapter) thymeleaf: 40%
 day10: (new chapter) SpringDataRedis: 40%
 dya11: ElasticSearch: 100%, Java Rest: 100%
+day12: Search function:80% homework:0%
+
+
+
+
+20190624ï¿½ï¿½
+day01: Create Environment: 90%
+day02: Front End: 100%, Upload function: 20%
+day03: Spawn project template 100%, Manage Category: 50%, Manage Album: 90%
+day04: Combine spu and sku: 95%, Manage Goods: 70%
+day05: Manage Order: 35%
+day06: ECharts: 90%
+day07: BCypt: 80%	Spring Security: 40%, Login: 70%, Login log: 0%
+day08: rbac: 20%
+day09: (new chapter) thymeleaf: 40%
+day10: (new chapter) SpringDataRedis: 40%
+dya11: ElasticSearch: 100%, Java Rest: 80%

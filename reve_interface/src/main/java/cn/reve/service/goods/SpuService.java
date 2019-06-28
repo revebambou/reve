@@ -42,4 +42,5 @@ public interface SpuService {
     void updateSpuViaExamine(String spuId, String radio, String memo);
 
     void batchExamineByIds(String[] spuIds, String radio, String memo);
+
 }
