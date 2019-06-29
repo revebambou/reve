@@ -1,22 +1,37 @@
 package cn.reve.service.impl;
+import cn.reve.utils.MethodUtils;
 import com.alibaba.dubbo.config.annotation.Service;
+import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import cn.reve.dao.UserMapper;
 import cn.reve.entity.PageResult;
 import cn.reve.pojo.user.User;
 import cn.reve.service.user.UserService;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    private String verifyCode = "verifyCode";
 
     /**
      * 返回全部记录
@@ -93,6 +108,59 @@ public class UserServiceImpl implements UserService {
      */
     public void delete(String username) {
         userMapper.deleteByPrimaryKey(username);
+    }
+
+    @Override
+    public void spawnCode(String phoneNum) {
+        String code = MethodUtils.generalRandomNum(6, 10);
+        Map<String, String> map = new HashMap<>();
+        map.put("phoneNum", phoneNum);
+        map.put("code", code);
+        System.out.println(map);
+        String jsonString = JSON.toJSONString(map);
+        //save to RabbitMQ
+        rabbitTemplate.convertAndSend("", "yoka", jsonString);
+        //save to redis
+        //the key must using different each time when saving to the redis
+        redisTemplate.boundValueOps(verifyCode+phoneNum).set(code);
+        redisTemplate.boundValueOps(verifyCode+phoneNum).expire(5, TimeUnit.MINUTES);
+    }
+
+    @Override
+    public void addUser(User user, String code) {
+        if(code==null || "".equals(code)){
+            throw new RuntimeException("The verify code is empty, please enter it and try again later");
+        }
+        String phoneNum = user.getPhone();
+        if(phoneNum==null || "".equals(phoneNum)){
+            throw new RuntimeException("The phone number hasn't been entered, please check again and then try again later.");
+        }
+        if(userMapper.selectCount(user)>0){
+            throw new RuntimeException("The phone number "+phoneNum+" has been used, please check again and then try again later.");
+        }
+
+        String verifyCode = (String)redisTemplate.boundValueOps(this.verifyCode+phoneNum).get();
+        if(verifyCode==null || "".equals(verifyCode)){
+            throw new RuntimeException("The verify code is expired or it hasn't been sent with the phone number "+phoneNum+". Please check again and then try again later.");
+        }
+        if(!verifyCode.equals(code)){
+            throw new RuntimeException("The verify code is invalid, please check again and then try again later.");
+        }else{
+            //init part of values
+            Date date = new Date();
+            user.setCreated(date);
+            user.setUpdated(date);
+            String username = user.getUsername();
+            if(username==null || "".equals(username)){
+                user.setUsername(user.getPhone());
+            }
+            user.setUserLevel(0);
+            user.setStatus("1");
+            userMapper.insertSelective(user);
+
+            //if log in success, the verify code should be removed in redis????
+//            redisTemplate.delete(this.verifyCode+phoneNum);
+        }
     }
 
     /**

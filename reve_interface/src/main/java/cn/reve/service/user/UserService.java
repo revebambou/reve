@@ -32,4 +32,7 @@ public interface UserService {
 
     public void delete(String username);
 
+    void spawnCode(String phoneNum);
+
+    void addUser(User user, String phoneNum);
 }
