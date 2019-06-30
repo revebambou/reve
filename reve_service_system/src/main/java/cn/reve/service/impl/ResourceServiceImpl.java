@@ -9,6 +9,8 @@ import cn.reve.service.system.ResourceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -93,6 +95,29 @@ public class ResourceServiceImpl implements ResourceService {
      */
     public void delete(Integer id) {
         resourceMapper.deleteByPrimaryKey(id);
+    }
+
+    @Override
+    public List<Map<String, Object>> findAllResources() {
+        List<Resource> resourceList = resourceMapper.selectAll();
+        return saveResources(resourceList, 0);
+    }
+
+    private List<Map<String, Object>> saveResources(List<Resource> resourceList, int parentId){
+        List<Map<String, Object>> mapList = new ArrayList<>();
+        if(resourceList!=null && resourceList.size()!=0){
+            for (Resource resource : resourceList) {
+                if(parentId==resource.getParentId()){
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", resource.getId());
+                    map.put("resKey", resource.getResKey());
+                    map.put("resName", resource.getResName());
+                    map.put("children", saveResources(resourceList, resource.getId()));
+                    mapList.add(map);
+                }
+            }
+        }
+        return mapList;
     }
 
     /**

@@ -7,6 +7,7 @@ import cn.reve.pojo.system.Resource;
 import cn.reve.service.system.ResourceService;
 import org.springframework.web.bind.annotation.*;
 
+import javax.management.ObjectName;
 import java.util.*;
 
 @RestController
@@ -19,6 +20,12 @@ public class ResourceController {
     @GetMapping("/findAll")
     public List<Resource> findAll(){
         return resourceService.findAll();
+    }
+
+    @GetMapping("/findAllResources")
+    public List<Map<String, Object>> findAllResources(){
+        List<Map<String, Object>> allResources = resourceService.findAllResources();
+        return allResources;
     }
 
     @GetMapping("/findPage")

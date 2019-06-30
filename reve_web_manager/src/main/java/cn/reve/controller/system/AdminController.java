@@ -1,11 +1,15 @@
 package cn.reve.controller.system;
 
+import cn.reve.pojo.system.AdminRoleList;
+import cn.reve.pojo.system.Role;
+import cn.reve.pojo.user.User;
 import cn.reve.utils.BCrypt;
 import com.alibaba.dubbo.config.annotation.Reference;
 import cn.reve.entity.PageResult;
 import cn.reve.entity.Result;
 import cn.reve.pojo.system.Admin;
 import cn.reve.service.system.AdminService;
+import com.alibaba.fastjson.JSON;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -18,13 +22,40 @@ public class AdminController {
     private AdminService adminService;
 
     @PostMapping("/addAdminRole")
-    public Result addAdminRole(@RequestBody Map<String, Object> admin){
-        String password = (String) admin.get("password");
-        String gensalt = BCrypt.gensalt();
-        password = BCrypt.hashpw(password, gensalt);
-        System.out.println("del after ok"+password);
-        admin.put("password", password);
+    public Result addAdminRole(@RequestBody Admin admin,  String roleList, String memo){
+        List<String> roles = JSON.parseObject(roleList, List.class);
+        //bcrypt the password
+        admin = preHandlePassword(admin);
+        adminService.saveAdminRoleList(admin, roles, memo);
         return new Result();
+    }
+
+    @PostMapping("/updateAdminRole")
+    public Result updateAdminRole(@RequestBody Admin admin, String roleList, String memo){
+        List<String> roles = JSON.parseObject(roleList, List.class);
+        admin = preHandlePassword(admin);
+        adminService.updateAdminRole(admin, roles, memo);
+        return new Result();
+    }
+
+    /**
+     * if the password is not null or empty, it should be bcript
+     * @param admin
+     * @return
+     */
+    private Admin preHandlePassword(Admin admin){
+        String password = admin.getPassword();
+        if(null!=password && "".equals(password)){
+            String gensalt = BCrypt.gensalt();
+            String hashpw = BCrypt.hashpw(password, gensalt);
+            admin.setPassword(hashpw);
+        }
+        return admin;
+    }
+
+    @GetMapping("/findAdminRoleById")
+    public AdminRoleList findAdminRoleByAdminId(Integer adminId){
+        return adminService.findAdminRoleByAdminId(adminId);
     }
 
     @GetMapping("/findAll")

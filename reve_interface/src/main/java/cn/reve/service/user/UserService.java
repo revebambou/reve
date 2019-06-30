@@ -35,4 +35,8 @@ public interface UserService {
     void spawnCode(String phoneNum);
 
     void addUser(User user, String phoneNum);
+
+    void checkCode(String code, String phoneNum);
+
+    void checkPhone(String phoneNum);
 }

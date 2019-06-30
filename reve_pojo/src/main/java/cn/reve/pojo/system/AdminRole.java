@@ -1,43 +1,31 @@
 package cn.reve.pojo.system;
 
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.List;
 
+@Table(name="tb_admin_role")
 public class AdminRole implements Serializable {
 
-    private Admin admin;
+    @Id
+    private Integer adminId;
+    @Id
+    private Integer roleId;
 
-    private List<Role> roleList;
-
-    public AdminRole(Admin admin, List<Role> roleList) {
-        this.admin = admin;
-        this.roleList = roleList;
+    public Integer getAdminId() {
+        return adminId;
     }
 
-    public AdminRole() {
+    public void setAdminId(Integer adminId) {
+        this.adminId = adminId;
     }
 
-    public Admin getAdmin() {
-        return admin;
+    public Integer getRoleId() {
+        return roleId;
     }
 
-    public void setAdmin(Admin admin) {
-        this.admin = admin;
-    }
-
-    public List<Role> getRoleList() {
-        return roleList;
-    }
-
-    public void setRoleList(List<Role> roleList) {
-        this.roleList = roleList;
-    }
-
-    @Override
-    public String toString() {
-        return "AdminRole{" +
-                "admin=" + admin +
-                ", roleList=" + roleList +
-                '}';
+    public void setRoleId(Integer roleId) {
+        this.roleId = roleId;
     }
 }

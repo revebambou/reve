@@ -1,6 +1,7 @@
 package cn.reve.service.system;
 import cn.reve.entity.PageResult;
 import cn.reve.pojo.system.Admin;
+import cn.reve.pojo.system.AdminRoleList;
 
 import java.util.*;
 
@@ -32,5 +33,9 @@ public interface AdminService {
 
     public void delete(Integer id);
 
-    void saveAdminRoleByMap(Map<String, Object> admin);
+    void saveAdminRoleList(Admin admin, List<String> roles, String memo);
+
+    AdminRoleList findAdminRoleByAdminId(Integer adminId);
+
+    void updateAdminRole(Admin admin, List<String> roleList, String memo);
 }

@@ -29,7 +29,8 @@ public interface ResourceService {
 
     public void update(Resource resource);
 
-
     public void delete(Integer id);
+
+    List<Map<String, Object>> findAllResources();
 
 }

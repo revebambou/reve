@@ -1,4 +1,5 @@
 package cn.reve.service.impl;
+import cn.reve.utils.MapperUtils;
 import cn.reve.utils.MethodUtils;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSON;
@@ -8,6 +9,7 @@ import cn.reve.dao.UserMapper;
 import cn.reve.entity.PageResult;
 import cn.reve.pojo.user.User;
 import cn.reve.service.user.UserService;
+import org.omg.SendingContext.RunTime;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -31,7 +33,19 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    private String sufPrompt = "please check again and then try again later.";
+
     private String verifyCode = "verifyCode";
+
+    private String count = "count";
+
+    private String avoid = "avoid";
+
+    private String phoneNumIsNull = "The phone number shouldn't empty, ";
+
+    private String phoneNumUsed = "The phone number had been used, ";
+
+    private String codeIsNull = "The verify code shouldn't be empty, ";
 
     /**
      * 返回全部记录
@@ -112,40 +126,76 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void spawnCode(String phoneNum) {
+        //the method of getting the verify code and when check the phone num
+        //check if this phone has been used
+        phoneIsUsed(phoneNum, phoneNumUsed);
+        Object tempCount = redisTemplate.boundValueOps(count + verifyCode + phoneNum).get();
+        Integer countTime = 0;
+            if(tempCount!=null){
+                if(tempCount instanceof Integer) {
+                    countTime = (Integer) tempCount;
+                    countTime++;
+                    //make sure user cannot continue to send code,
+                        Object countAvoidTemp = redisTemplate.boundValueOps(count + avoid + verifyCode + phoneNum).get();
+                        if (countAvoidTemp == null) {
+                            redisTemplate.boundValueOps(count + avoid + verifyCode + phoneNum).set(0);
+                            redisTemplate.boundValueOps(count + avoid + verifyCode + phoneNum).expire(24, TimeUnit.HOURS);
+                        } else if (countAvoidTemp instanceof Integer) {
+                            Integer countAvoidTime = (Integer)countAvoidTemp;
+                            //send 5 times in 24 hours, then cannot send code again in 24 hours
+                            if(countAvoidTime>=5) {
+                                throw new RuntimeException("Operation is too frequently with phone number " + phoneNum + " today, please try again after 24 hours");
+                            }else{
+                                countAvoidTime++;
+                                redisTemplate.boundValueOps(count+avoid+verifyCode+phoneNum).set(countAvoidTime);
+                                redisTemplate.boundValueOps(count+avoid+verifyCode+phoneNum).expire(24,TimeUnit.HOURS);
+                            }
+                        } else{
+                            //if the type is not required, then remove it. Most of time, this will not be run
+                            redisTemplate.delete(count+avoid+verifyCode+phoneNum);
+                            throw new RuntimeException("Invalid value of countAvoidTime is existed in redis, and it has been removed automatically, please try again later");
+                        }
+                        //
+                    if (countTime >= 3) {
+                        throw new RuntimeException("Operation is too frequently, please try again after 5 minutes.");
+                    }
+                    redisTemplate.boundValueOps(count + verifyCode + phoneNum).set(countTime);
+                    redisTemplate.boundValueOps(count + verifyCode + phoneNum).expire(5, TimeUnit.MINUTES);
+                }else{
+                    //if the class type is not required, then remove it. Most of time, this won't be run
+                    redisTemplate.delete(count+verifyCode+phoneNum);
+                    throw new RuntimeException("Invalid value of countTime is existed in redis, and it has been removed automatically, please try again later");
+                }
+            }
+
         String code = MethodUtils.generalRandomNum(6, 10);
         Map<String, String> map = new HashMap<>();
         map.put("phoneNum", phoneNum);
         map.put("code", code);
-        System.out.println(map);
         String jsonString = JSON.toJSONString(map);
         //save to RabbitMQ
         rabbitTemplate.convertAndSend("", "yoka", jsonString);
         //save to redis
-        //the key must using different each time when saving to the redis
+        //the key must be different when saving to the redis while the user is different
+        //The phone number can make sure the key is unique
         redisTemplate.boundValueOps(verifyCode+phoneNum).set(code);
         redisTemplate.boundValueOps(verifyCode+phoneNum).expire(5, TimeUnit.MINUTES);
+        if(countTime==0) {
+            redisTemplate.boundValueOps(count + verifyCode + phoneNum).set(0);
+            redisTemplate.boundValueOps(count + verifyCode + phoneNum).expire(5, TimeUnit.MINUTES);
+        }
     }
 
     @Override
     public void addUser(User user, String code) {
-        if(code==null || "".equals(code)){
-            throw new RuntimeException("The verify code is empty, please enter it and try again later");
-        }
+        isNull(code, codeIsNull);
         String phoneNum = user.getPhone();
-        if(phoneNum==null || "".equals(phoneNum)){
-            throw new RuntimeException("The phone number hasn't been entered, please check again and then try again later.");
-        }
-        if(userMapper.selectCount(user)>0){
-            throw new RuntimeException("The phone number "+phoneNum+" has been used, please check again and then try again later.");
-        }
+        isNull(phoneNum, phoneNumIsNull);
+        phoneIsUsed(phoneNum, phoneNumUsed);
 
         String verifyCode = (String)redisTemplate.boundValueOps(this.verifyCode+phoneNum).get();
-        if(verifyCode==null || "".equals(verifyCode)){
-            throw new RuntimeException("The verify code is expired or it hasn't been sent with the phone number "+phoneNum+". Please check again and then try again later.");
-        }
-        if(!verifyCode.equals(code)){
-            throw new RuntimeException("The verify code is invalid, please check again and then try again later.");
-        }else{
+        isNull(verifyCode, "The verify code is expired or it hasn't been sent with the phone number "+phoneNum+" ,");
+        isNotEqual(verifyCode, code, "The verify code is invalid, ");
             //init part of values
             Date date = new Date();
             user.setCreated(date);
@@ -157,9 +207,41 @@ public class UserServiceImpl implements UserService {
             user.setUserLevel(0);
             user.setStatus("1");
             userMapper.insertSelective(user);
+    }
 
-            //if log in success, the verify code should be removed in redis????
-//            redisTemplate.delete(this.verifyCode+phoneNum);
+    @Override
+    public void checkCode(String code, String phoneNum) {
+        isNull(code, codeIsNull);
+        isNull(phoneNum, phoneNumIsNull);
+        phoneIsUsed(phoneNum, phoneNumUsed);
+
+        String verifyCode = (String)redisTemplate.boundValueOps(this.verifyCode + phoneNum).get();
+        isNull(verifyCode, "The verify code is not existed or had been expired, ");
+        isNotEqual(verifyCode, code, "The verify code is invalid, ");
+    }
+
+    @Override
+    public void checkPhone(String phoneNum) {
+        isNull(phoneNum, phoneNumIsNull);
+        phoneIsUsed(phoneNum, phoneNumUsed);
+    }
+
+    private void isNull(String value, String prePrompt){
+        if(null==value || "".equals(value)){
+            throw new RuntimeException(prePrompt+sufPrompt);
+        }
+    }
+
+    private void phoneIsUsed(String phoneNum, String prePrompt){
+        Example example = MapperUtils.andEqualToWithSingleValue(User.class, "phone", phoneNum);
+        if(userMapper.selectCountByExample(example)>0){
+            throw new RuntimeException(prePrompt+sufPrompt);
+        }
+    }
+
+    private void isNotEqual(String offSet, String desc, String prePrompt){
+        if(!offSet.equals(desc)){
+            throw new RuntimeException(prePrompt+sufPrompt);
         }
     }
 

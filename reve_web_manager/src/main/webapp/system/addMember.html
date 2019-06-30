@@ -9,15 +9,15 @@
 </head>
 <body>
     <div id="app">
-        <el-form ref="form" :model="admin" label-width="150px">
+        <el-form ref="form" :model="pojo" label-width="150px">
             <el-form-item label="Member Nickname">
-                <el-input v-model="admin.loginName"></el-input>
+                <el-input v-model="pojo.loginName"></el-input>
             </el-form-item>
             <el-form-item label="Member Name">
-                <el-input v-model="admin.name"></el-input>
+                <el-input v-model="pojo.name"></el-input>
             </el-form-item>
-            <el-form-item label="Member Name">
-                <el-select v-model="admin.roleList" placeholder="Please select one or more roles" :multiple="true">
+            <el-form-item label="Admin Role">
+                <el-select v-model="roleList" placeholder="Please select one or more roles" :multiple="true">
                     <el-option label="超级管理员" value="1"></el-option>
                     <el-option label="客服" value="2"></el-option>
                     <el-option label="商品管理员" value="3"></el-option>
@@ -27,13 +27,13 @@
             </el-form-item>
 
             <el-form-item label="password">
-                <el-input placeholder="请输入密码" v-model="admin.password" show-password></el-input>
+                <el-input placeholder="请输入密码" v-model="pojo.password" show-password></el-input>
             </el-form-item>
             <el-form-item label="Note">
                 <el-input
                         type="textarea"
                         placeholder="max length: 40 characters"
-                        v-model="admin.textarea"
+                        v-model="memo"
                         maxlength="40"
                         show-word-limit="true"
                 >
@@ -53,30 +53,47 @@
         el:"#app",
         data() {
             return {
-                admin:{
-                    loginName:"debug name",
-                    name:"revebambou",
-                    email:"123@qq.com",
-                    roleList:[],
-                    password:"123",
-                    activity:"123",
-                    textarea:"123",
-
-                },
+                    pojo:{},
+                    roleList:["1", "2"],
+                    memo:"",
+                    adminId:"",
             }
         },
         created(){
-
+            let search = window.location.search;
+            let index = search.lastIndexOf("=")+1;
+            let adminId = search.substring(index);
+            this.adminId = adminId;
+            if(adminId){
+                this.fetchData();
+            }
         },
 
         methods: {
             onSubmit() {
+                console.log(this.pojo)
                 console.log('submit!');
             },
 
             addMember(){
-                axios.post(`/admin/addAdminRole.do`, this.admin).then(response=>{
-                    alert(response);
+                let roleList = JSON.stringify(this.roleList);
+                let uri = this.adminId==""?"add":"update";
+                if(this.adminId){
+                    this.pojo.id = this.adminId;
+                }
+                axios.post(`/admin/${uri}AdminRole.do?memo=${this.memo}&roleList=${roleList}`, this.pojo).then(response=>{
+                    alert(response.data.message);
+                })
+            },
+            fetchData(){
+                axios.get(`/admin/findAdminRoleById.do?adminId=${this.adminId}`).then(response=>{
+                        console.log(response.data)
+                    this.pojo=response.data.admin;
+                        this.pojo.password="";
+                        this.roleList=[];
+                        for(let i=0; i<response.data.roleList.length;i++){
+                            this.roleList.push(response.data.roleList[i].id+"")
+                        }
                 })
             }
         }

@@ -14,6 +14,18 @@ public class RegisterController {
     @Reference
     private UserService userService;
 
+    @GetMapping("/checkCode")
+    public Result checkCode(String code, String phoneNum){
+        userService.checkCode(code, phoneNum);
+        return new Result();
+    }
+
+    @GetMapping("/checkPhone")
+    public Result checkPhone(String phoneNum){
+        userService.checkPhone(phoneNum);
+        return new Result();
+    }
+
     @GetMapping("/spawnCode")
     public Result spawnCode(String phoneNum){
         userService.spawnCode(phoneNum);

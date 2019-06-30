@@ -8,12 +8,17 @@
 	<title>个人注册</title>
 	<link rel="icon" href="./img/favicon.ico">
 
+	<!-- 引入样式 -->
+	<link rel="stylesheet" href="/css/elementui.css">
+	<link rel="stylesheet" href="/plugins/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="/css/style.css">
 
     <link rel="stylesheet" type="text/css" href="./css/all.css" />
     <link rel="stylesheet" type="text/css" href="./css/pages-register.css" />
 </head>
 
 <body>
+<div id="app">
 	<!--页面顶部-->
 <div id="nav-bottom">
 	<!--顶部-->
@@ -36,7 +41,7 @@
 							<li class="f-item"><span>关注青橙</span></li>
 							<li class="f-item"><span><a href="cooperation.html" target="_blank">合作招商</a></span></li>
 							<li class="f-item"><span><a href="shoplogin.html" target="_blank">商家后台</a></span></li>				
-							<li class="f-item"><span>网站导航</li>
+							<li class="f-item"><span>网站导航</span></li>
 						</ul>
 					</div>
 				</div>
@@ -79,25 +84,26 @@
 					<div class="control-group">
 						<label class="control-label">手机号：</label>
 						<div class="controls">
-							<input type="text" placeholder="请输入你的手机号" class="input-xfat input-xlarge">
+							<input type="text" v-model="pojo.phone" placeholder="请输入你的手机号" @mouseOut="checkPhone()" :style="phoneBorderStyle" class="input-xfat input-xlarge">
+							<input type="button" @click="sendSms()" value="Send Verify Code">
 						</div>
 					</div>
 					<div class="control-group">
-						<label for="inputPassword" class="control-label">验证码：</label>
+						<label for="code" class="control-label" name="code" id="code">验证码：</label>
 						<div class="controls">
-							<input type="text" placeholder="验证码" class="input-xfat input-xlarge">
+							<input type="text" v-model="code" placeholder="验证码" @mouseOut="checkCode()" :style="codeBorderStyle" class="input-xfat input-xlarge">
 						</div>
 					</div>
 					<div class="control-group">
 						<label for="inputPassword" class="control-label">登录密码：</label>
 						<div class="controls">
-							<input type="password" placeholder="设置登录密码" class="input-xfat input-xlarge">
+							<input type="password" v-model="pojo.password" placeholder="设置登录密码" @mouseOut="checkPassword()" :style="passwordBorderStyle" class="input-xfat input-xlarge">
 						</div>
 					</div>
 					<div class="control-group">
 						<label for="inputPassword" class="control-label">确认密码：</label>
 						<div class="controls">
-							<input type="password" placeholder="再次确认密码" class="input-xfat input-xlarge">
+							<input type="password" v-model="password" placeholder="再次确认密码" @mouseOut="checkPasswordAgain()" :style="passwordAgainBorderStyle" class="input-xfat input-xlarge">
 						</div>
 					</div>
 					<div class="control-group">
@@ -109,7 +115,7 @@
 					<div class="control-group">
 						<label class="control-label"></label>
 						<div class="controls btn-reg">
-							<a class="sui-btn btn-block btn-xlarge btn-danger" href="home.html" target="_blank">完成注册</a>
+							<a class="sui-btn btn-block btn-xlarge btn-danger" href="javascript:void(0)" @click="saveAccount()">完成注册</a>
 						</div>
 					</div>
 				</form>
@@ -134,7 +140,7 @@
 		</div>
 	</div>
 
-
+</div>
 
 
 </body>
@@ -146,18 +152,98 @@
 		el:"#app",
 		data(){
 		    return{
-
+				pojo:{},
+				code:"",
+				password:"",
+                codeBorderStyle:"",
+                passwordAgainBorderStyle:"",
+				passwordBorderStyle:"",
+                phoneBorderStyle:"",
+				verifyCode:false,
+				verifyPhone:false,
+				verifyPassword:false,
 			}
 		},
 		created(){
 
 		},
 		methods:{
-		    saveCode(){
-
+		    saveAccount(){
+				if(this.verifyPhone && this.verifyCode && this.verifyPassword){
+				    axios.post(`/register/addUser.do?code=${this.code}`,this.pojo).then(response=>{
+				        if(response.data.code==1){
+				            alert(response.data.message);
+						}else{
+				            location.href="/homepage.html";
+						}
+					})
+				}else{
+				    alert("One or more info is invalid, please check again and then try again later.")
+				}
 			},
 			sendSms(){
-
+		        if(this.pojo.phone) {
+                    axios.get(`/register/spawnCode.do?phoneNum=${this.pojo.phone}`).then(response => {
+                        if (response.data.code == 0) {
+                            alert("send correctly")
+                        } else {
+                            alert(response.data.message)
+                        }
+                    })
+                }
+			},
+			checkPhone(){
+		      if(this.pojo.phone==null || ""==this.pojo.phone){
+		          this.verifyPhone=false;
+		          this.phoneBorderStyle="border-color:red";
+			  }else{
+                  axios.get(`/register/checkPhone.do?phoneNum=${this.pojo.phone}`).then(response=>{
+                      if(response.data.code==0){
+                          this.verifyPhone=true;
+                          this.phoneBorderStyle="border-color:green";
+                      }else{
+                          this.verifyPhone=false;
+                          this.phoneBorderStyle="border-color:red";
+                          alert(response.data.message)
+                      }
+                  })
+			  }
+			},
+			checkPassword(){
+		        if(this.pojo.password==null || ""==this.pojo.password){
+		            this.passwordBorderStyle="border-color:red";
+		            this.verifyPassword=false;
+				}else{
+		            this.passwordBorderStyle="border-color:green";
+		            this.verifyPassword=true;
+				}
+			},
+			checkPasswordAgain(){
+		        if(this.password==this.pojo.password){
+		            this.passwordAgainBorderStyle="border-color:green";
+		            this.verifyPassword=true;
+				}else{
+		            this.passwordAgainBorderStyle="border-color:red";
+		            this.verifyPassword=false;
+				}
+			},
+			checkCode(){
+		        if(this.code!=null && this.code!="" && this.pojo.phone!=null && this.pojo.phone!="") {
+                    axios.get(`register/checkCode.do?code=${this.code}&phoneNum=${this.pojo.phone}`).then(response => {
+                        if (response.data.code == 0) {
+                            this.codeBorderStyle = "border-color: green;";
+                            this.verifyCode=true;
+                        } else {
+                            this.codeBorderStyle = "border-color: red;";
+                            this.verifyCode=false;
+                            alert(response.data.message);
+                        }
+                    })
+                }else{
+                    this.codeBorderStyle = "border-color: red;";
+                    this.verifyCode=false;
+                    alert("phone number or the verify code is null")
+				}
 			}
 		}
 	})

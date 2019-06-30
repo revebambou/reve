@@ -1,6 +1,10 @@
 package cn.reve.service.impl;
+import cn.reve.dao.AdminRoleMapper;
 import cn.reve.dao.RoleMapper;
+import cn.reve.pojo.system.AdminRole;
+import cn.reve.pojo.system.AdminRoleList;
 import cn.reve.pojo.system.Role;
+import cn.reve.utils.MapperUtils;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -9,17 +13,24 @@ import cn.reve.entity.PageResult;
 import cn.reve.pojo.system.Admin;
 import cn.reve.service.system.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service(interfaceClass = AdminService.class)
 public class AdminServiceImpl implements AdminService {
 
     @Autowired
     private AdminMapper adminMapper;
 
+    @Autowired
+    private AdminRoleMapper adminRoleMapper;
+
+    @Autowired
+    private RoleMapper roleMapper;
 
     /**
      * 返回全部记录
@@ -99,26 +110,60 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public void saveAdminRoleByMap(Map<String, Object> adminRole) {
-        saveAdmin(adminRole);
-        saveAdminRole(adminRole);
+    @Transactional
+    public void saveAdminRoleList(Admin admin, List<String> roles, String memo) {
+        saveAdminRole(admin, roles, false);
     }
 
-    private void saveAdmin(Map<String, Object> adminRole){
-        Admin admin = new Admin();
-        admin.setLoginName((String) adminRole.get("loginName"));
-        admin.setPassword((String) adminRole.get("password"));
-        admin.setStatus("1");
-        adminMapper.insertSelective(admin);
+    @Override
+    public AdminRoleList findAdminRoleByAdminId(Integer adminId) {
+        AdminRoleList adminRoleList = new AdminRoleList();
+        Admin admin = adminMapper.selectByPrimaryKey(adminId);
+        Example example = MapperUtils.andEqualToWithSingleValue(AdminRole.class, "adminId", adminId);
+        List<AdminRole> adminRoles = adminRoleMapper.selectByExample(example);
+        List<Role> roleList = new ArrayList<>();
+        for (AdminRole role : adminRoles) {
+            Integer roleId = role.getRoleId();
+            Role roleQuery = roleMapper.selectByPrimaryKey(roleId);
+            roleList.add(roleQuery);
+        }
+        adminRoleList.setAdmin(admin);
+        adminRoleList.setRoleList(roleList);
+        return adminRoleList;
     }
 
-    private void saveAdminRole(Map<String, Object> adminRole){
-        List<String> roleList = (List<String>) adminRole.get("roleList");
-        if(roleList!=null && roleList.size()!=0){
-            for (String str : roleList) {
-                Role role = new Role();
-                role.setName(str);
+    @Override
+    @Transactional
+    public void updateAdminRole(Admin admin, List<String> roleList, String memo) {
+        saveAdminRole(admin, roleList, true);
+    }
+
+
+    private void saveAdminRole(Admin admin, List<String> roles, boolean update){
+        int adminId = admin.getId();
+        if(!update){
+            adminMapper.insertSelective(admin);
+            //need to assign the id if this is insert
+            adminId = admin.getId();
+        }
+        //if this is updated, remove all the previous tb_admin_role
+        else{
+            adminMapper.updateByPrimaryKeySelective(admin);
+            Example example = MapperUtils.andEqualToWithSingleValue(AdminRole.class, "adminId", adminId);
+            List<AdminRole> adminRoles = adminRoleMapper.selectByExample(example);
+            for (AdminRole role : adminRoles) {
+                AdminRole adminRole = new AdminRole();
+                adminRole.setRoleId(role.getRoleId());
+                adminRole.setAdminId(adminId);
+                adminRoleMapper.deleteByPrimaryKey(adminRole);
             }
+        }
+        //save tb_admin_role
+        AdminRole adminRole = new AdminRole();
+        for (String role : roles) {
+            adminRole.setAdminId(adminId);
+            adminRole.setRoleId(Integer.parseInt(role));
+            adminRoleMapper.insertSelective(adminRole);
         }
     }
 
